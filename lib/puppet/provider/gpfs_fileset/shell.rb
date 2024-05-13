@@ -20,6 +20,8 @@ Puppet::Type.type(:gpfs_fileset).provide(:shell, parent: Puppet::Provider::Gpfs)
   commands mmunlinkfileset: '/usr/lpp/mmfs/bin/mmunlinkfileset'
   commands mmdelfileset: '/usr/lpp/mmfs/bin/mmdelfileset'
   commands mmchfileset: '/usr/lpp/mmfs/bin/mmchfileset'
+  # add mmaudit command:
+  commands mmaudit: '/usr/lpp/mmfs/bin/mmaudit'
 
   def self.instances
     filesets = []
@@ -128,6 +130,29 @@ Puppet::Type.type(:gpfs_fileset).provide(:shell, parent: Puppet::Provider::Gpfs)
     else
       @property_hash[:ensure] = :unlinked
     end
+  end
+
+  # Define FAL:
+  # command: mmaudit scratch enable --log-fileset <logfileset> --retention <retention_days> --filesets <filesets_list>
+  def audit
+    mmaudit_args = ([resource[:filesystem], 'enable'])
+
+    # Define filesets_list:
+    filesets_list = filesets.join(',')
+    if resource[:logfileset]
+    mmaudit_args << '--log-fileset'
+    mmaudit_args << resource[:logfileset]
+    end
+    if resource[:retention_days]
+    mmaudit_args << '--retention'
+    mmaudit_args << resource[:retention_days]
+    end
+    if resource[:filesets_list]
+    mmaudit_args << '--filesets'
+    mmaudit_args << resource[:filesets_list]
+    end
+
+    mmaudit(mmaudit_args)
   end
 
   def destroy
